@@ -113,6 +113,7 @@ Z80TargetLowering::Z80TargetLowering(const Z80TargetMachine &TM,
       const char * const Name;
       const CallingConv::ID CC;
     } LibraryCalls[] = {
+      // Integers
       { ZEXT_I16_I24,     "_stoiu",    Z80_LibCall },
       { SEXT_I16_I24,     "_stoi",     Z80_LibCall },
       { SEXT_I24_I32,     "_itol",     Z80_LibCall },
@@ -180,6 +181,15 @@ Z80TargetLowering::Z80TargetLowering(const Z80TargetMachine &TM,
       { UREM_I32,         "_lremu",    Z80_LibCall },
       { UDIVREM_I24,      "_idvrmu",   Z80_LibCall },
       { UDIVREM_I32,      "_ldvrmu",   Z80_LibCall },
+      // Floats
+      { ADD_F32,          "_fadd",     Z80_LibCall_L },
+      { SUB_F32,          "_fsub",     Z80_LibCall_L },
+      { MUL_F32,          "_fmul",     Z80_LibCall_L },
+      { DIV_F32,          "_fdiv",     Z80_LibCall_L },
+      { FPTOSINT_F32_I32, "_ftol",     Z80_LibCall_L },
+      { FPTOUINT_F32_I32, "_ftol",     Z80_LibCall_L }, // Hmm
+      { SINTTOFP_I32_F32, "_ltof",     Z80_LibCall_L },
+      { UINTTOFP_I32_F32, "_ultof",    Z80_LibCall_L },
     };
 
     for (const auto &LC : LibraryCalls) {
