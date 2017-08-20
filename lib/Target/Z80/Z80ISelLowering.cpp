@@ -59,7 +59,8 @@ Z80TargetLowering::Z80TargetLowering(const Z80TargetMachine &TM,
                           ISD::SMUL_LOHI, ISD::UMUL_LOHI,
                           ISD::SMULO,     ISD::UMULO,
                           ISD::MULHU,     ISD::MULHS,
-                          ISD::SELECT,    ISD::SETCC,     ISD::SETCCE })
+                          ISD::SELECT,    ISD::SETCC,     ISD::SETCCE,
+                          ISD::BSWAP })
       setOperationAction(Opc, VT, Expand);
     for (unsigned Opc : { ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD })
       setLoadExtAction(Opc, VT, MVT::i1, Promote);
