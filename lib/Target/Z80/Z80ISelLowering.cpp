@@ -110,140 +110,99 @@ Z80TargetLowering::Z80TargetLowering(const Z80TargetMachine &TM,
 
   setBooleanContents(UndefinedBooleanContent);
 
-  setLibcallName(RTLIB::ZEXT_I16_I24, "_stoiu");
-  setLibcallCallingConv(RTLIB::ZEXT_I16_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SEXT_I16_I24, "_stoi");
-  setLibcallCallingConv(RTLIB::SEXT_I16_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SEXT_I24_I32, "_itol");
-  setLibcallCallingConv(RTLIB::SEXT_I24_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::NOT_I16, "_snot");
-  setLibcallCallingConv(RTLIB::NOT_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::NOT_I24, "_inot");
-  setLibcallCallingConv(RTLIB::NOT_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::NOT_I32, "_lnot");
-  setLibcallCallingConv(RTLIB::NOT_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::AND_I16, "_sand");
-  setLibcallCallingConv(RTLIB::AND_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::AND_I24, "_iand");
-  setLibcallCallingConv(RTLIB::AND_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::AND_I32, "_land");
-  setLibcallCallingConv(RTLIB::AND_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::OR_I16, "_sor");
-  setLibcallCallingConv(RTLIB::OR_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::OR_I24, "_ior");
-  setLibcallCallingConv(RTLIB::OR_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::OR_I32, "_lor");
-  setLibcallCallingConv(RTLIB::OR_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::XOR_I16, "_sxor");
-  setLibcallCallingConv(RTLIB::XOR_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::XOR_I24, "_ixor");
-  setLibcallCallingConv(RTLIB::XOR_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::XOR_I32, "_lxor");
-  setLibcallCallingConv(RTLIB::XOR_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SHL_I8, "_bshl");
-  setLibcallCallingConv(RTLIB::SHL_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SHL_I16, "_sshl");
-  setLibcallCallingConv(RTLIB::SHL_I16, CallingConv::Z80_LibCall_C);
-  setLibcallName(RTLIB::SHL_I16_I8, "_sshl_b");
-  setLibcallCallingConv(RTLIB::SHL_I16_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SHL_I24, "_ishl");
-  setLibcallCallingConv(RTLIB::SHL_I24, CallingConv::Z80_LibCall_C);
-  setLibcallName(RTLIB::SHL_I24_I8, "_ishl_b");
-  setLibcallCallingConv(RTLIB::SHL_I24_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SHL_I32, "_lshl");
-  setLibcallCallingConv(RTLIB::SHL_I32, CallingConv::Z80_LibCall_L);
-  setLibcallName(RTLIB::SRA_I8, "_bshrs");
-  setLibcallCallingConv(RTLIB::SRA_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SRA_I16, "_sshrs");
-  setLibcallCallingConv(RTLIB::SRA_I16, CallingConv::Z80_LibCall_C);
-  setLibcallName(RTLIB::SRA_I16_I8, "_sshrs_b");
-  setLibcallCallingConv(RTLIB::SRA_I16_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SRA_I24, "_ishrs");
-  setLibcallCallingConv(RTLIB::SRA_I24, CallingConv::Z80_LibCall_C);
-  setLibcallName(RTLIB::SRA_I24_I8, "_ishrs_b");
-  setLibcallCallingConv(RTLIB::SRA_I24_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SRA_I32, "_lshrs");
-  setLibcallCallingConv(RTLIB::SRA_I32, CallingConv::Z80_LibCall_L);
-  setLibcallName(RTLIB::SRL_I8, "_bshl");
-  setLibcallCallingConv(RTLIB::SRL_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SRL_I16, "_sshru");
-  setLibcallCallingConv(RTLIB::SRL_I16, CallingConv::Z80_LibCall_C);
-  setLibcallName(RTLIB::SRL_I16_I8, "_sshru_b");
-  setLibcallCallingConv(RTLIB::SRL_I16_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SRL_I24, "_ishru");
-  setLibcallCallingConv(RTLIB::SRL_I24, CallingConv::Z80_LibCall_C);
-  setLibcallName(RTLIB::SRL_I24_I8, "_ishru_b");
-  setLibcallCallingConv(RTLIB::SRL_I24_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SRL_I32, "_lshru");
-  setLibcallCallingConv(RTLIB::SRL_I32, CallingConv::Z80_LibCall_L);
-  setLibcallName(RTLIB::CMP_I32, "_lcmpu");
-  setLibcallCallingConv(RTLIB::CMP_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::CMP_I16_0, "_scmpzero");
-  setLibcallCallingConv(RTLIB::CMP_I16_0, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::CMP_I24_0, "_icmpzero");
-  setLibcallCallingConv(RTLIB::CMP_I24_0, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::CMP_I32_0, "_lcmpzero");
-  setLibcallCallingConv(RTLIB::CMP_I32_0, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SCMP, "_setflag");
-  setLibcallCallingConv(RTLIB::SCMP, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::NEG_I16, "_sneg");
-  setLibcallCallingConv(RTLIB::NEG_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::NEG_I24, "_ineg");
-  setLibcallCallingConv(RTLIB::NEG_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::NEG_I32, "_lneg");
-  setLibcallCallingConv(RTLIB::NEG_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::ADD_I32, "_ladd");
-  setLibcallCallingConv(RTLIB::ADD_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::ADD_I32_I8, "_ladd_b");
-  setLibcallCallingConv(RTLIB::ADD_I32_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SUB_I32, "_lsub");
-  setLibcallCallingConv(RTLIB::SUB_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::MUL_I8, "_bmulu");
-  setLibcallCallingConv(RTLIB::MUL_I8, CallingConv::Z80_LibCall_BC);
-  setLibcallName(RTLIB::MUL_I16, "_smulu");
-  setLibcallCallingConv(RTLIB::MUL_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::MUL_I24, "_imulu");
-  setLibcallCallingConv(RTLIB::MUL_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::MUL_I24_I8, "_imul_b");
-  setLibcallCallingConv(RTLIB::MUL_I24_I8, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::MUL_I32, "_lmulu");
-  setLibcallCallingConv(RTLIB::MUL_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SDIV_I8, "_bdivs");
-  setLibcallCallingConv(RTLIB::SDIV_I8, CallingConv::Z80_LibCall_BC);
-  setLibcallName(RTLIB::SDIV_I16, "_sdivs");
-  setLibcallCallingConv(RTLIB::SDIV_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SDIV_I24, "_idivs");
-  setLibcallCallingConv(RTLIB::SDIV_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SDIV_I32, "_ldivs");
-  setLibcallCallingConv(RTLIB::SDIV_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UDIV_I8, "_bdivu");
-  setLibcallCallingConv(RTLIB::UDIV_I8, CallingConv::Z80_LibCall_BC);
-  setLibcallName(RTLIB::UDIV_I16, "_sdivu");
-  setLibcallCallingConv(RTLIB::UDIV_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UDIV_I24, "_idivu");
-  setLibcallCallingConv(RTLIB::UDIV_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UDIV_I32, "_ldivu");
-  setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SREM_I8, "_brems");
-  setLibcallCallingConv(RTLIB::SREM_I8, CallingConv::Z80_LibCall_AC);
-  setLibcallName(RTLIB::SREM_I16, "_srems");
-  setLibcallCallingConv(RTLIB::SREM_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SREM_I24, "_irems");
-  setLibcallCallingConv(RTLIB::SREM_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::SREM_I32, "_lrems");
-  setLibcallCallingConv(RTLIB::SREM_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UREM_I8, "_bremu");
-  setLibcallCallingConv(RTLIB::UREM_I8, CallingConv::Z80_LibCall_AC);
-  setLibcallName(RTLIB::UREM_I16, "_sremu");
-  setLibcallCallingConv(RTLIB::UREM_I16, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UREM_I24, "_iremu");
-  setLibcallCallingConv(RTLIB::UREM_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UREM_I32, "_lremu");
-  setLibcallCallingConv(RTLIB::UREM_I32, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UDIVREM_I24, "_idvrmu");
-  setLibcallCallingConv(RTLIB::UDIVREM_I24, CallingConv::Z80_LibCall);
-  setLibcallName(RTLIB::UDIVREM_I32, "_ldvrmu");
-  setLibcallCallingConv(RTLIB::UDIVREM_I32, CallingConv::Z80_LibCall);
+  {
+    using namespace RTLIB;
+    using namespace CallingConv;
+
+    const struct {
+      const RTLIB::Libcall Call;
+      const char * const Name;
+      const CallingConv::ID CC;
+    } LibraryCalls[] = {
+      // Integers
+      { ZEXT_I16_I24,     "_stoiu",    Z80_LibCall },
+      { SEXT_I16_I24,     "_stoi",     Z80_LibCall },
+      { SEXT_I24_I32,     "_itol",     Z80_LibCall },
+      { NOT_I16,          "_snot",     Z80_LibCall },
+      { NOT_I24,          "_inot",     Z80_LibCall },
+      { NOT_I32,          "_lnot",     Z80_LibCall },
+      { AND_I16,          "_sand",     Z80_LibCall },
+      { AND_I24,          "_iand",     Z80_LibCall },
+      { AND_I32,          "_land",     Z80_LibCall },
+      { OR_I16,           "_sor",      Z80_LibCall },
+      { OR_I24,           "_ior",      Z80_LibCall },
+      { OR_I32,           "_lor",      Z80_LibCall },
+      { XOR_I16,          "_sxor",     Z80_LibCall },
+      { XOR_I24,          "_ixor",     Z80_LibCall },
+      { XOR_I32,          "_lxor",     Z80_LibCall },
+      { SHL_I8,           "_bshl",     Z80_LibCall },
+      { SHL_I16,          "_sshl",     Z80_LibCall_C },
+      { SHL_I16_I8,       "_sshl_b",   Z80_LibCall },
+      { SHL_I24,          "_ishl",     Z80_LibCall_C },
+      { SHL_I24_I8,       "_ishl_b",   Z80_LibCall },
+      { SHL_I32,          "_lshl",     Z80_LibCall_L },
+      { SRA_I8,           "_bshrs",    Z80_LibCall },
+      { SRA_I16,          "_sshrs",    Z80_LibCall_C },
+      { SRA_I16_I8,       "_sshrs_b",  Z80_LibCall },
+      { SRA_I24,          "_ishrs",    Z80_LibCall_C },
+      { SRA_I24_I8,       "_ishrs_b",  Z80_LibCall },
+      { SRA_I32,          "_lshrs",    Z80_LibCall_L },
+      { SRL_I8,           "_bshl",     Z80_LibCall },
+      { SRL_I16,          "_sshru",    Z80_LibCall_C },
+      { SRL_I16_I8,       "_sshru_b",  Z80_LibCall },
+      { SRL_I24,          "_ishru",    Z80_LibCall_C },
+      { SRL_I24_I8,       "_ishru_b",  Z80_LibCall },
+      { SRL_I32,          "_lshru",    Z80_LibCall_L },
+      { CMP_I32,          "_lcmpu",    Z80_LibCall },
+      { CMP_I16_0,        "_scmpzero", Z80_LibCall },
+      { CMP_I24_0,        "_icmpzero", Z80_LibCall },
+      { CMP_I32_0,        "_lcmpzero", Z80_LibCall },
+      { SCMP,             "_setflag",  Z80_LibCall },
+      { NEG_I16,          "_sneg",     Z80_LibCall },
+      { NEG_I24,          "_ineg",     Z80_LibCall },
+      { NEG_I32,          "_lneg",     Z80_LibCall },
+      { ADD_I32,          "_ladd",     Z80_LibCall },
+      { ADD_I32_I8,       "_ladd_b",   Z80_LibCall },
+      { SUB_I32,          "_lsub",     Z80_LibCall },
+      { MUL_I8,           "_bmulu",    Z80_LibCall_BC },
+      { MUL_I16,          "_smulu",    Z80_LibCall },
+      { MUL_I24,          "_imulu",    Z80_LibCall },
+      { MUL_I24_I8,       "_imul_b",   Z80_LibCall },
+      { MUL_I32,          "_lmulu",    Z80_LibCall },
+      { SDIV_I8,          "_bdivs",    Z80_LibCall_BC },
+      { SDIV_I16,         "_sdivs",    Z80_LibCall },
+      { SDIV_I24,         "_idivs",    Z80_LibCall },
+      { SDIV_I32,         "_ldivs",    Z80_LibCall },
+      { UDIV_I8,          "_bdivu",    Z80_LibCall_BC },
+      { UDIV_I16,         "_sdivu",    Z80_LibCall },
+      { UDIV_I24,         "_idivu",    Z80_LibCall },
+      { UDIV_I32,         "_ldivu",    Z80_LibCall },
+      { SREM_I8,          "_brems",    Z80_LibCall_AC },
+      { SREM_I16,         "_srems",    Z80_LibCall },
+      { SREM_I24,         "_irems",    Z80_LibCall },
+      { SREM_I32,         "_lrems",    Z80_LibCall },
+      { UREM_I8,          "_bremu",    Z80_LibCall_AC },
+      { UREM_I16,         "_sremu",    Z80_LibCall },
+      { UREM_I24,         "_iremu",    Z80_LibCall },
+      { UREM_I32,         "_lremu",    Z80_LibCall },
+      { UDIVREM_I24,      "_idvrmu",   Z80_LibCall },
+      { UDIVREM_I32,      "_ldvrmu",   Z80_LibCall },
+      // Floats
+      { ADD_F32,          "_fadd",     Z80_LibCall_L },
+      { SUB_F32,          "_fsub",     Z80_LibCall_L },
+      { MUL_F32,          "_fmul",     Z80_LibCall_L },
+      { DIV_F32,          "_fdiv",     Z80_LibCall_L },
+      { FPTOSINT_F32_I32, "_ftol",     Z80_LibCall_L },
+      { FPTOUINT_F32_I32, "_ftol",     Z80_LibCall_L }, // Hmm
+      { SINTTOFP_I32_F32, "_ltof",     Z80_LibCall_L },
+      { UINTTOFP_I32_F32, "_ultof",    Z80_LibCall_L },
+    };
+
+    for (const auto &LC : LibraryCalls) {
+      setLibcallName(LC.Call, LC.Name);
+      setLibcallCallingConv(LC.Call, LC.CC);
+    }
+  }
 }
 
 // SelectionDAG Helpers
