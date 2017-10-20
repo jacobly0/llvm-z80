@@ -91,13 +91,11 @@ void Z80FrameLowering::BuildStackAdjustment(MachineFunction &MF,
                                                           : Z80::PUSH16r)))
         .addReg(ScratchReg, getDefRegState(Offset >= 0) |
                 getDeadRegState(Offset >= 0) | getUndefRegState(Offset < 0));
-    unsigned StackReg = Is24Bit ? Z80::SPL : Z80::SPS;
     while (IncDecCount--)
-      BuildMI(MBB, MI, DL, TII.get(Offset >= 0 ? (Is24Bit ? Z80::INC24r
-                                                          : Z80::INC16r)
-                                               : (Is24Bit ? Z80::DEC24r
-                                                          : Z80::DEC16r)),
-              StackReg).addReg(StackReg);
+      BuildMI(MBB, MI, DL, TII.get(Offset >= 0 ? (Is24Bit ? Z80::INC24SP
+                                                          : Z80::INC16SP)
+                                               : (Is24Bit ? Z80::DEC24SP
+                                                          : Z80::DEC16SP)));
     return;
   }
 
@@ -274,7 +272,6 @@ bool Z80FrameLowering::spillCalleeSavedRegisters(
   DebugLoc DL = MBB.findDebugLoc(MI);
   if (UseShadow)
     shadowCalleeSavedRegisters(MBB, MI, DL, MachineInstr::FrameSetup, CSI);
-  unsigned Opc = Is24Bit ? Z80::PUSH24r : Z80::PUSH16r;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i - 1].getReg();
 
@@ -304,8 +301,14 @@ bool Z80FrameLowering::spillCalleeSavedRegisters(
     // passed in callee saved registers.
     // Omitting the kill flags is conservatively correct even if the live-in
     // is not used after all.
-    BuildMI(MBB, MI, DL, TII.get(Opc)).addReg(Reg, getKillRegState(CanKill))
-      .setMIFlag(MachineInstr::FrameSetup);
+    MachineInstrBuilder MIB;
+    if (Reg == Z80::AF)
+      MIB = BuildMI(MBB, MI, DL, TII.get(Is24Bit ? Z80::PUSH24AF
+                                                 : Z80::PUSH16AF));
+    else
+      MIB = BuildMI(MBB, MI, DL, TII.get(Is24Bit ? Z80::PUSH24r : Z80::PUSH16r))
+        .addReg(Reg, getKillRegState(CanKill));
+    MIB.setMIFlag(MachineInstr::FrameSetup);
   }
   return true;
 }
@@ -316,7 +319,6 @@ bool Z80FrameLowering::restoreCalleeSavedRegisters(
   const MachineFunction &MF = *MBB.getParent();
   bool UseShadow = shouldUseShadow(MF);
   DebugLoc DL = MBB.findDebugLoc(MI);
-  unsigned Opc = Is24Bit ? Z80::POP24r : Z80::POP16r;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
 
@@ -325,8 +327,14 @@ bool Z80FrameLowering::restoreCalleeSavedRegisters(
                      !Z80::I16RegClass.contains(Reg))
       continue;
 
-    BuildMI(MBB, MI, DL, TII.get(Opc), Reg)
-      .setMIFlag(MachineInstr::FrameDestroy);
+    MachineInstrBuilder MIB;
+    if (Reg == Z80::AF)
+      MIB = BuildMI(MBB, MI, DL, TII.get(Is24Bit ? Z80::POP24AF
+                                                 : Z80::POP16AF));
+    else
+      MIB = BuildMI(MBB, MI, DL, TII.get(Is24Bit ? Z80::POP24r : Z80::POP16r),
+                    Reg);
+    MIB.setMIFlag(MachineInstr::FrameDestroy);
   }
   if (UseShadow)
     shadowCalleeSavedRegisters(MBB, MI, DL, MachineInstr::FrameDestroy, CSI);

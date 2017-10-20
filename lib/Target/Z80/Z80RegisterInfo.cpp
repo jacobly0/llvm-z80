@@ -134,7 +134,7 @@ BitVector Z80RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 }
 
 bool Z80RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
-                                            MachineBasicBlock::iterator I,
+                                            MachineBasicBlock::iterator MI,
                                             MachineBasicBlock::iterator &UseMI,
                                             const TargetRegisterClass *RC,
                                             unsigned Reg) const {
@@ -143,15 +143,21 @@ bool Z80RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   const TargetRegisterInfo *TRI = STI.getRegisterInfo();
   DebugLoc DL;
-  BuildMI(MBB, I, DL, TII.get(Is24Bit ? Z80::PUSH24r : Z80::PUSH16r))
-    .addReg(Reg);
-  for (MachineBasicBlock::iterator II = I; II != UseMI ; ++II) {
+  if (Reg == Z80::AF)
+    BuildMI(MBB, MI, DL, TII.get(Is24Bit ? Z80::PUSH24AF : Z80::PUSH16AF));
+  else
+    BuildMI(MBB, MI, DL, TII.get(Is24Bit ? Z80::PUSH24r : Z80::PUSH16r))
+      .addReg(Reg);
+  for (MachineBasicBlock::iterator II = MI; II != UseMI ; ++II) {
     if (II->isDebugValue())
       continue;
     if (II->modifiesRegister(Reg, TRI))
       UseMI = II;
   }
-  BuildMI(MBB, UseMI, DL, TII.get(Is24Bit ? Z80::POP24r : Z80::POP16r), Reg);
+  if (Reg == Z80::AF)
+    BuildMI(MBB, UseMI, DL, TII.get(Is24Bit ? Z80::POP24AF : Z80::POP16AF));
+  else
+    BuildMI(MBB, UseMI, DL, TII.get(Is24Bit ? Z80::POP24r : Z80::POP16r), Reg);
   return true;
 }
 

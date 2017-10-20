@@ -503,9 +503,9 @@ def EXAF : I<NoPre, 0x08, "ex", "\taf, af'">;
 def EXX  : I<NoPre, 0xD9, "exx">;
 
 let Defs = [DE, HL], Uses = [DE, HL] in
-def EX16DE : I16<NoPre, 0xEB, "ex", "\tde, hl", "", (outs), (ins)>;
+def EX16DE : I16<NoPre, 0xEB, "ex", "\tde, hl">;
 let Defs = [UDE, UHL], Uses = [UDE, UHL] in
-def EX24DE : I24<NoPre, 0xEB, "ex", "\tde, hl", "", (outs), (ins)>;
+def EX24DE : I24<NoPre, 0xEB, "ex", "\tde, hl">;
 
 let Constraints = "$imp = $dst" in {
 let Uses = [SPS] in
@@ -516,33 +516,45 @@ def EX24SP : I24<Idx0Pre, 0xE3, "ex", "\t(sp), $dst", "",
                  (outs A24:$dst), (ins A24:$imp)>;
 }
 
-let Uses = [SPS], Defs = [SPS] in {
-  let mayLoad = 1 in {
-    def POP16r  : I16 <Idx0Pre, 0xC1, "pop",  "\t$dst", "",
-                       (outs S16:$dst), (ins), [(set S16:$dst, Z80pop)]>,
+let Defs = [SPS], Uses = [SPS] in {
+  let mayLoad = 1 in
+    def POP16r  : I16 <Idx0Pre, 0xC1, "pop", "\t$dst", "",
+                       (outs R16:$dst), (ins), [(set R16:$dst, Z80pop)]>,
                   Requires<[In16BitMode]>;
-  }
   let mayStore = 1 in {
     def PUSH16r : I16 <Idx0Pre, 0xC5, "push", "\t$src", "",
-                       (outs), (ins S16:$src), [(Z80push S16:$src)]>,
+                       (outs), (ins R16:$src), [(Z80push R16:$src)]>,
                   Requires<[In16BitMode]>;
-    def PEA16o  : I16o<EDPre,   0x65, "pea",  "\t$src", "",
+    def PEA16o  : I16o<EDPre, 0x65, "pea", "\t$src", "",
                        (outs), (ins off16:$src), [(Z80push offpat:$src)]>,
                   Requires<[In16BitMode, HaveEZ80Ops]>;
   }
 }
-let Uses = [SPL], Defs = [SPL] in {
-  let mayLoad = 1 in {
-    def POP24r  : I24 <Idx0Pre, 0xC1, "pop",  "\t$dst", "",
-                       (outs S24:$dst), (ins), [(set S24:$dst, Z80pop)]>;
-  }
+let Defs = [AF, SPS], Uses = [SPS], mayLoad = 1 in
+def POP16AF  : I16<NoPre, 0xF1, "pop", "\taf", "",
+                   (outs), (ins), [(set AF, Z80pop)]>,
+               Requires<[In16BitMode]>;
+let Defs = [SPS], Uses = [AF, SPS], mayStore = 1 in
+def PUSH16AF : I16<NoPre, 0xF5, "push", "\taf", "",
+                   (outs), (ins), [(Z80push AF)]>,
+               Requires<[In16BitMode]>;
+let Defs = [SPL], Uses = [SPL] in {
+  let mayLoad = 1 in
+    def POP24r  : I24 <Idx0Pre, 0xC1, "pop", "\t$dst", "",
+                       (outs R24:$dst), (ins), [(set R24:$dst, Z80pop)]>;
   let mayStore = 1 in {
     def PUSH24r : I24 <Idx0Pre, 0xC5, "push", "\t$src", "",
-                       (outs), (ins S24:$src), [(Z80push S24:$src)]>;
-    def PEA24o  : I24o<EDPre,   0x65, "pea",  "\t$src", "",
+                       (outs), (ins R24:$src), [(Z80push R24:$src)]>;
+    def PEA24o  : I24o<EDPre,   0x65, "pea", "\t$src", "",
                        (outs), (ins off24:$src), [(Z80push offpat:$src)]>;
   }
 }
+let Defs = [AF, SPL], Uses = [SPL], mayLoad = 1 in
+def POP24AF  : I24<NoPre, 0xF1, "pop", "\taf", "",
+                   (outs), (ins), [(set AF, Z80pop)]>;
+let Defs = [SPL], Uses = [AF, SPL], mayStore = 1 in
+def PUSH24AF : I24<NoPre, 0xF5, "push", "\taf", "",
+                   (outs), (ins), [(Z80push AF)]>;
 
 let isReMaterializable = 1, Defs = [F] in {
   def RCF : P;
@@ -708,17 +720,29 @@ defm TST : BinOp8F  <EDPre, 4, "tst", 1>,
 
 let Defs = [F] in {
 def INC16r : I16<Idx0Pre, 0x03, "inc", "\t$dst", "$imp = $dst",
-                 (outs C16:$dst), (ins C16:$imp),
-                 [(set C16:$dst, F, (Z80inc_flag C16:$imp))]>;
-def INC24r : I24<Idx0Pre, 0x03, "inc", "\t$dst", "$imp = $dst",
-                 (outs C24:$dst), (ins C24:$imp),
-                 [(set C24:$dst, F, (Z80inc_flag C24:$imp))]>;
+                 (outs R16:$dst), (ins R16:$imp),
+                 [(set R16:$dst, F, (Z80inc_flag R16:$imp))]>;
 def DEC16r : I16<Idx0Pre, 0x0B, "dec", "\t$dst", "$imp = $dst",
-                 (outs C16:$dst), (ins C16:$imp),
-                 [(set C16:$dst, F, (Z80dec_flag C16:$imp))]>;
+                 (outs R16:$dst), (ins R16:$imp),
+                 [(set R16:$dst, F, (Z80dec_flag R16:$imp))]>;
+def INC24r : I24<Idx0Pre, 0x03, "inc", "\t$dst", "$imp = $dst",
+                 (outs R24:$dst), (ins R24:$imp),
+                 [(set R24:$dst, F, (Z80inc_flag R24:$imp))]>;
 def DEC24r : I24<Idx0Pre, 0x0B, "dec", "\t$dst", "$imp = $dst",
-                 (outs C24:$dst), (ins C24:$imp),
-                 [(set C24:$dst, F, (Z80dec_flag C24:$imp))]>;
+                 (outs R24:$dst), (ins R24:$imp),
+                 [(set R24:$dst, F, (Z80dec_flag R24:$imp))]>;
+}
+let Defs = [SPS, F], Uses = [SPS] in {
+def INC16SP : I16<NoPre, 0x33, "inc", "\tsp", "",
+                  (outs), (ins), [(set SPS, F, (Z80inc_flag SPS))]>;
+def DEC16SP : I16<NoPre, 0x3B, "dec", "\tsp", "",
+                  (outs), (ins), [(set SPS, F, (Z80dec_flag SPS))]>;
+}
+let Defs = [SPL, F], Uses = [SPL] in {
+def INC24SP : I24<NoPre, 0x33, "inc", "\tsp", "",
+                  (outs), (ins), [(set SPL, F, (Z80inc_flag SPL))]>;
+def DEC24SP : I24<NoPre, 0x3B, "dec", "\tsp", "",
+                  (outs), (ins), [(set SPL, F, (Z80dec_flag SPL))]>;
 }
 def : Pat<(add R16:$imp,  1), (INC16r R16:$imp)>;
 def : Pat<(add R16:$imp, -1), (DEC16r R16:$imp)>;
@@ -757,12 +781,6 @@ def : Pat<(addc A16:$imp, O16:$src), (ADD16ao A16:$imp, O16:$src)>;
 def : Pat<(addc A24:$imp, O24:$src), (ADD24ao A24:$imp, O24:$src)>;
 
 let Defs = [HL, F] in {
-  let Uses = [HL, SPS, F] in {
-    def SBC16SP : I16<EDPre, 0x72, "sbc", "\thl, sp", "", (outs), (ins),
-                      [(set  HL, F, (Z80sbc_flag HL, SPS, F))]>;
-    def ADC16SP : I16<EDPre, 0x7A, "adc", "\thl, sp", "", (outs), (ins),
-                      [(set  HL, F, (Z80adc_flag HL, SPS, F))]>;
-  }
   let Uses = [HL, F] in {
     def SBC16aa : I16<EDPre, 0x42, "sbc", "\thl, hl", "", (outs), (ins),
                       [(set  HL, F, (Z80sbc_flag  HL, HL,       F))]>;
@@ -773,14 +791,14 @@ let Defs = [HL, F] in {
     def ADC16ao : I16<EDPre, 0x4A, "adc", "\thl, $src", "", (outs), (ins O16:$src),
                       [(set  HL, F, (Z80adc_flag  HL, O16:$src, F))]>;
   }
+  let Uses = [HL, SPS, F] in {
+    def SBC16SP : I16<EDPre, 0x72, "sbc", "\thl, sp", "", (outs), (ins),
+                      [(set  HL, F, (Z80sbc_flag HL, SPS, F))]>;
+    def ADC16SP : I16<EDPre, 0x7A, "adc", "\thl, sp", "", (outs), (ins),
+                      [(set  HL, F, (Z80adc_flag HL, SPS, F))]>;
+  }
 }
 let Defs = [UHL, F] in {
-  let Uses = [UHL, SPL, F] in {
-    def SBC24SP : I24<EDPre, 0x72, "sbc", "\thl, sp", "", (outs), (ins),
-                      [(set UHL, F, (Z80sbc_flag UHL, SPL, F))]>;
-    def ADC24SP : I24<EDPre, 0x7A, "adc", "\thl, sp", "", (outs), (ins),
-                      [(set UHL, F, (Z80adc_flag UHL, SPL, F))]>;
-  }
   let Uses = [UHL, F] in {
     def SBC24aa : I24<EDPre, 0x42, "sbc", "\thl, hl", "", (outs), (ins),
                       [(set UHL, F, (Z80sbc_flag UHL, UHL, F))]>;
@@ -790,6 +808,12 @@ let Defs = [UHL, F] in {
                       [(set UHL, F, (Z80sbc_flag UHL, O24:$src, F))]>;
     def ADC24ao : I24<EDPre, 0x4A, "adc", "\thl, $src", "", (outs), (ins O24:$src),
                       [(set UHL, F, (Z80adc_flag UHL, O24:$src, F))]>;
+  }
+  let Uses = [UHL, SPL, F] in {
+    def SBC24SP : I24<EDPre, 0x72, "sbc", "\thl, sp", "", (outs), (ins),
+                      [(set UHL, F, (Z80sbc_flag UHL, SPL, F))]>;
+    def ADC24SP : I24<EDPre, 0x7A, "adc", "\thl, sp", "", (outs), (ins),
+                      [(set UHL, F, (Z80adc_flag UHL, SPL, F))]>;
   }
 }
 def : Pat<(sube  HL, O16:$src), (SBC16ao O16:$src)>;

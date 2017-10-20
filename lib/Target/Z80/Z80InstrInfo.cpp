@@ -39,10 +39,20 @@ Z80InstrInfo::Z80InstrInfo(Z80Subtarget &STI)
 
 int Z80InstrInfo::getSPAdjust(const MachineInstr &MI) const {
   switch (MI.getOpcode()) {
-  case Z80::POP16r: return 2;
-  case Z80::POP24r: return 3;
-  case Z80::PUSH16r: return -2;
-  case Z80::PUSH24r: return -3;
+  case Z80::POP16r:
+  case Z80::POP16AF:
+    return 2;
+  case Z80::POP24r:
+  case Z80::POP24AF:
+    return 3;
+  case Z80::PUSH16r:
+  case Z80::PUSH16AF:
+  case Z80::PEA16o:
+    return -2;
+  case Z80::PUSH24r:
+  case Z80::PUSH24AF:
+  case Z80::PEA24o:
+    return -3;
   }
   return TargetInstrInfo::getSPAdjust(MI);
 }
@@ -397,17 +407,16 @@ void Z80InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       } else {
         // We are copying between different index registers, so we need to use
         // an intermediate register.
-        BuildMI(MBB, MI, DL, get(Subtarget.is24Bit() ? Z80::PUSH24r
-                                                     : Z80::PUSH16r))
-          .addReg(Z80::AF);
+        BuildMI(MBB, MI, DL, get(Subtarget.is24Bit() ? Z80::PUSH24AF
+                                                     : Z80::PUSH16AF));
         BuildMI(MBB, MI, DL, get(Z80::X8RegClass.contains(SrcReg) ? Z80::LD8xx
                                                                   : Z80::LD8yy),
                 Z80::A).addReg(SrcReg, getKillRegState(KillSrc));
         BuildMI(MBB, MI, DL, get(Z80::X8RegClass.contains(DstReg) ? Z80::LD8xx
                                                                   : Z80::LD8yy),
                 DstReg).addReg(Z80::A);
-        BuildMI(MBB, MI, DL, get(Subtarget.is24Bit() ? Z80::POP24r
-                                                     : Z80::POP16r), Z80::AF);
+        BuildMI(MBB, MI, DL, get(Subtarget.is24Bit() ? Z80::POP24AF
+                                                     : Z80::POP16AF));
       }
     } else {
       assert(Subtarget.hasIndexHalfRegs() && "Need  index half registers");
@@ -846,11 +855,10 @@ bool Z80InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   case Z80::LD8rp: {
     MachineOperand &DstOp = MI.getOperand(0);
     if (Z80::I8RegClass.contains(DstOp.getReg())) {
-      BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::PUSH24r : Z80::PUSH16r))
-        .addReg(Z80::AF, RegState::Undef);
+      BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::PUSH24AF : Z80::PUSH16AF));
       DstOp.setReg(Z80::A);
       copyPhysReg(MBB, Next, DL, DstOp.getReg(), Z80::A, true);
-      BuildMI(MBB, Next, DL, get(Is24Bit ? Z80::POP24r : Z80::POP16r), Z80::AF);
+      BuildMI(MBB, Next, DL, get(Is24Bit ? Z80::POP24AF : Z80::POP16AF));
     }
     MI.setDesc(get(Opc == Z80::LD8ro ? Z80::LD8go : Z80::LD8gp));
     break;
@@ -906,12 +914,11 @@ bool Z80InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   case Z80::LD8pr: {
     MachineOperand &SrcOp = MI.getOperand(MI.getNumExplicitOperands() - 1);
     if (Z80::I8RegClass.contains(SrcOp.getReg())) {
-      BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::PUSH24r : Z80::PUSH16r))
-        .addReg(Z80::AF, RegState::Undef);
+      BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::PUSH24AF : Z80::PUSH16AF));
       copyPhysReg(MBB, MI, DL, Z80::A, SrcOp.getReg(), SrcOp.isKill());
       SrcOp.setReg(Z80::A);
       SrcOp.setIsKill();
-      BuildMI(MBB, Next, DL, get(Is24Bit ? Z80::POP24r : Z80::POP16r), Z80::AF);
+      BuildMI(MBB, Next, DL, get(Is24Bit ? Z80::POP24AF : Z80::POP16AF));
     }
     MI.setDesc(get(Opc == Z80::LD8or ? Z80::LD8og : Z80::LD8pg));
     break;
@@ -926,22 +933,22 @@ bool Z80InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     unsigned Reg = SrcOp.getReg();
     bool Index = Z80::I16RegClass.contains(Reg);
     bool Overlap = NewOpc == Z80::LD8pr && Reg == Z80::HL;
-    unsigned ScratchReg;
-    if (Index || Overlap) {
+    unsigned ScratchReg = Is24Bit ? Z80::UHL : Z80::HL;
+    if (Index) {
       unsigned SuperReg = TRI.getMatchingSuperReg(Reg, Z80::sub_short,
                                                   &Z80::R24RegClass);
-      ScratchReg = Index ? Is24Bit ? Z80::UHL : Z80::HL : Z80::AF;
       BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::PUSH24r : Z80::PUSH16r))
         .addReg(UseLEA || Overlap ? ScratchReg : Is24Bit ? SuperReg : Reg,
                 RegState::Undef);
-      if (Index) {
-        if (UseLEA)
-          BuildMI(MBB, MI, DL, get(Z80::LEA24ro), Z80::UHL)
-            .addReg(SuperReg).addImm(0);
-        else
-          BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::EX24SP : Z80::EX16SP),
-                  ScratchReg).addReg(ScratchReg);
-      }
+      if (UseLEA)
+        BuildMI(MBB, MI, DL, get(Z80::LEA24ro), Z80::UHL)
+          .addReg(SuperReg).addImm(0);
+      else
+        BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::EX24SP : Z80::EX16SP),
+                ScratchReg).addReg(ScratchReg);
+      Reg = Z80::HL;
+    } else if (Overlap) {
+      BuildMI(MBB, MI, DL, get(Is24Bit ? Z80::PUSH24AF : Z80::PUSH16AF));
       Reg = Z80::HL;
     }
     MIB = BuildMI(MBB, MI, DL, get(NewOpc)).addReg(AddrOp.getReg());
@@ -963,9 +970,11 @@ bool Z80InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
               AddrOp.getReg()).addReg(AddrOp.getReg());
     MI.setDesc(get(NewOpc));
     SrcOp.setReg(Reg);
-    if (Index || Overlap)
+    if (Index)
       BuildMI(MBB, Next, DL, get(Is24Bit ? Z80::POP24r : Z80::POP16r),
               ScratchReg);
+    else if (Overlap)
+      BuildMI(MBB, Next, DL, get(Is24Bit ? Z80::POP24AF : Z80::POP16AF));
     expandPostRAPseudo(*MIB);
     expandPostRAPseudo(MI);
     DEBUG(MI.dump());

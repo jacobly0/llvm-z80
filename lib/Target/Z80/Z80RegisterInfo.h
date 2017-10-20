@@ -67,7 +67,7 @@ public:
   }
 
   bool saveScavengerRegister(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator I,
+                             MachineBasicBlock::iterator MI,
                              MachineBasicBlock::iterator &UseMI,
                              const TargetRegisterClass *RC,
                              unsigned Reg) const override;
