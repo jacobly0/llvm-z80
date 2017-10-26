@@ -134,7 +134,7 @@ void TargetLoweringObjectFileELF::emitPersonalityValue(
                                                    ELF::SHT_PROGBITS, Flags, 0);
   unsigned Size = DL.getPointerSize();
   Streamer.SwitchSection(Sec);
-  Streamer.EmitValueToAlignment(DL.getPointerABIAlignment());
+  Streamer.EmitValueToAlignment(DL.getPointerABIAlignment(0));
   Streamer.EmitSymbolAttribute(Label, MCSA_ELF_TypeObject);
   const MCExpr *E = MCConstantExpr::create(Size, getContext());
   Streamer.emitELFSize(Label, E);
@@ -168,8 +168,7 @@ const MCExpr *TargetLoweringObjectFileELF::getTTypeGlobalReference(
                                                            MMI, Streamer);
 }
 
-static SectionKind
-getELFKindForNamedSection(StringRef Name, SectionKind K) {
+static SectionKind getELFKindForNamedSection(StringRef Name, SectionKind K) {
   // N.B.: The defaults used in here are no the same ones used in MC.
   // We follow gcc, MC follows gas. For example, given ".section .eh_frame",
   // both gas and MC will produce a section with no flags. Given
@@ -1234,40 +1233,37 @@ void TargetLoweringObjectFileCOFF::emitLinkerFlagsForGlobal(
 //                                  Wasm
 //===----------------------------------------------------------------------===//
 
-static const Comdat *getWasmComdat(const GlobalValue *GV) {
+static void checkWasmComdat(const GlobalValue *GV) {
   const Comdat *C = GV->getComdat();
   if (!C)
-    return nullptr;
+    return;
 
-  if (C->getSelectionKind() != Comdat::Any)
-    report_fatal_error("Wasm COMDATs only support SelectionKind::Any, '" +
-                       C->getName() + "' cannot be lowered.");
-
-  return C;
+  // TODO(sbc): At some point we may need COMDAT support but currently
+  // they are not supported.
+  report_fatal_error("WebAssembly doesn't support COMDATs, '" + C->getName() +
+                     "' cannot be lowered.");
 }
 
 MCSection *TargetLoweringObjectFileWasm::getExplicitSectionGlobal(
     const GlobalObject *GO, SectionKind Kind, const TargetMachine &TM) const {
   StringRef Name = GO->getSection();
-  return getContext().getWasmSection(Name, wasm::WASM_SEC_DATA);
+  checkWasmComdat(GO);
+  return getContext().getWasmSection(Name, SectionKind::getData());
 }
 
 static MCSectionWasm *selectWasmSectionForGlobal(
     MCContext &Ctx, const GlobalObject *GO, SectionKind Kind, Mangler &Mang,
     const TargetMachine &TM, bool EmitUniqueSection, unsigned *NextUniqueID) {
   StringRef Group = "";
-  if (getWasmComdat(GO))
-    llvm_unreachable("comdat not yet supported for wasm");
+  checkWasmComdat(GO);
 
   bool UniqueSectionNames = TM.getUniqueSectionNames();
   SmallString<128> Name = getSectionPrefixForGlobal(Kind);
 
-  uint32_t Type = wasm::WASM_SEC_DATA;
   if (const auto *F = dyn_cast<Function>(GO)) {
     const auto &OptionalPrefix = F->getSectionPrefix();
     if (OptionalPrefix)
       Name += *OptionalPrefix;
-    Type = wasm::WASM_SEC_CODE;
   }
 
   if (EmitUniqueSection && UniqueSectionNames) {
@@ -1279,7 +1275,7 @@ static MCSectionWasm *selectWasmSectionForGlobal(
     UniqueID = *NextUniqueID;
     (*NextUniqueID)++;
   }
-  return Ctx.getWasmSection(Name, Type, Group, UniqueID);
+  return Ctx.getWasmSection(Name, Kind, Group, UniqueID);
 }
 
 MCSection *TargetLoweringObjectFileWasm::SelectSectionForGlobal(
@@ -1330,9 +1326,9 @@ const MCExpr *TargetLoweringObjectFileWasm::lowerRelativeReference(
 
 void TargetLoweringObjectFileWasm::InitializeWasm() {
   StaticCtorSection =
-      getContext().getWasmSection(".init_array", wasm::WASM_SEC_DATA);
+      getContext().getWasmSection(".init_array", SectionKind::getData());
   StaticDtorSection =
-      getContext().getWasmSection(".fini_array", wasm::WASM_SEC_DATA);
+      getContext().getWasmSection(".fini_array", SectionKind::getData());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1360,4 +1356,3 @@ MCSection *TargetLoweringObjectFileOMF::SelectSectionForGlobal(
     return MOFI->getReadOnlySection();
   return nullptr;
 }
-

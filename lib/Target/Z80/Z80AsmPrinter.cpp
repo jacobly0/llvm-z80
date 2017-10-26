@@ -15,10 +15,10 @@
 #include "Z80AsmPrinter.h"
 #include "Z80.h"
 #include "MCTargetDesc/Z80TargetStreamer.h"
+#include "llvm/CodeGen/TargetLoweringObjectFile.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

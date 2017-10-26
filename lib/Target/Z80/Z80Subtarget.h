@@ -18,7 +18,7 @@
 #include "Z80ISelLowering.h"
 #include "Z80InstrInfo.h"
 #include "Z80SelectionDAGInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
 #include "Z80GenSubtargetInfo.inc"

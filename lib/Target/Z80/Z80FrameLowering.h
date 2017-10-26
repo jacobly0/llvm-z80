@@ -14,7 +14,7 @@
 #ifndef LLVM_LIB_TARGET_Z80_Z80FRAMELOWERING_H
 #define LLVM_LIB_TARGET_Z80_Z80FRAMELOWERING_H
 
-#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 
 namespace llvm {
 class Z80Subtarget;

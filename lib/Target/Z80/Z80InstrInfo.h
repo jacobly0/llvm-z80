@@ -15,7 +15,7 @@
 #define LLVM_LIB_TARGET_Z80_Z80INSTRINFO_H
 
 #include "Z80RegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "Z80GenInstrInfo.inc"

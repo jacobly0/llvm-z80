@@ -14,7 +14,7 @@
 #ifndef LLVM_LIB_TARGET_Z80_Z80REGISTERINFO_H
 #define LLVM_LIB_TARGET_Z80_Z80REGISTERINFO_H
 
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
 #include "Z80GenRegisterInfo.inc"

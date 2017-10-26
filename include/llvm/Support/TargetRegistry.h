@@ -197,6 +197,10 @@ private:
   /// ShortDesc - A short description of the target.
   const char *ShortDesc;
 
+  /// BackendName - The name of the backend implementation. This must match the
+  /// name of the 'def X : Target ...' in TableGen.
+  const char *BackendName;
+
   /// HasJIT - Whether this target supports the JIT.
   bool HasJIT;
 
@@ -289,6 +293,9 @@ public:
 
   /// getShortDescription - Get a short description of the target.
   const char *getShortDescription() const { return ShortDesc; }
+
+  /// getBackendName - Get the backend name.
+  const char *getBackendName() const { return BackendName; }
 
   /// @}
   /// @name Feature Predicates
@@ -664,10 +671,15 @@ struct TargetRegistry {
   /// @param Name - The target name. This should be a static string.
   /// @param ShortDesc - A short target description. This should be a static
   /// string.
+  /// @param BackendName - The name of the backend. This should be a static
+  /// string that is the same for all targets that share a backend
+  /// implementation and must match the name used in the 'def X : Target ...' in
+  /// TableGen.
   /// @param ArchMatchFn - The arch match checking function for this target.
   /// @param HasJIT - Whether the target supports JIT code
   /// generation.
   static void RegisterTarget(Target &T, const char *Name, const char *ShortDesc,
+                             const char *BackendName,
                              Target::ArchMatchFnTy ArchMatchFn,
                              bool HasJIT = false);
 
@@ -897,13 +909,15 @@ struct TargetRegistry {
 /// }
 /// extern "C" void LLVMInitializeFooTargetInfo() {
 ///   RegisterTarget<Triple::foo> X(getTheFooTarget(), "foo", "Foo
-///   description");
+///   description", "Foo" /* Backend Name */);
 /// }
 template <Triple::ArchType TargetArchType = Triple::UnknownArch,
           bool HasJIT = false>
 struct RegisterTarget {
-  RegisterTarget(Target &T, const char *Name, const char *Desc) {
-    TargetRegistry::RegisterTarget(T, Name, Desc, &getArchMatch, HasJIT);
+  RegisterTarget(Target &T, const char *Name, const char *Desc,
+                 const char *BackendName) {
+    TargetRegistry::RegisterTarget(T, Name, Desc, BackendName, &getArchMatch,
+                                   HasJIT);
   }
 
   static bool getArchMatch(Triple::ArchType Arch) {

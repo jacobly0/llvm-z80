@@ -15,8 +15,8 @@
 #ifndef LLVM_LIB_TARGET_Z80_Z80ISELLOWERING_H
 #define LLVM_LIB_TARGET_Z80_Z80ISELLOWERING_H
 
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/TargetLowering.h"
 
 namespace llvm {
 class Z80Subtarget;

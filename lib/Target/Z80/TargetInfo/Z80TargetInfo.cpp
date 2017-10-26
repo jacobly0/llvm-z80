@@ -21,8 +21,9 @@ Target &llvm::getTheEZ80Target() {
 }
 
 extern "C" void LLVMInitializeZ80TargetInfo() {
-  RegisterTarget<Triple::z80> X(getTheZ80Target(), "z80", "Z80 [experimental]");
-  RegisterTarget<Triple::ez80> Y(
-      getTheEZ80Target(), "ez80", "eZ80 [experimental]");
+  RegisterTarget<Triple::z80> X(getTheZ80Target(), "z80",
+                                "Z80 [experimental]", "Z80");
+  RegisterTarget<Triple::ez80> Y(getTheEZ80Target(), "ez80",
+                                 "eZ80 [experimental]", "Z80");
 }
 

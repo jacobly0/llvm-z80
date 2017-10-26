@@ -380,21 +380,6 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT_CC(SDNode *N) {
                      N->getOperand(4));
 }
 
-SDValue DAGTypeLegalizer::ScalarizeVecRes_SETCC(SDNode *N) {
-  assert(N->getValueType(0).isVector() ==
-         N->getOperand(0).getValueType().isVector() &&
-         "Scalar/Vector type mismatch");
-
-  if (N->getValueType(0).isVector()) return ScalarizeVecRes_VSETCC(N);
-
-  SDValue LHS = GetScalarizedVector(N->getOperand(0));
-  SDValue RHS = GetScalarizedVector(N->getOperand(1));
-  SDLoc DL(N);
-
-  // Turn it into a scalar SETCC.
-  return DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS, N->getOperand(2));
-}
-
 SDValue DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
   return DAG.getUNDEF(N->getValueType(0).getVectorElementType());
 }
@@ -408,7 +393,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
   return GetScalarizedVector(N->getOperand(Op));
 }
 
-SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
+SDValue DAGTypeLegalizer::ScalarizeVecRes_SETCC(SDNode *N) {
   assert(N->getValueType(0).isVector() &&
          N->getOperand(0).getValueType().isVector() &&
          "Operand types must be vectors");
@@ -461,7 +446,8 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
       N->dump(&DAG);
       dbgs() << "\n";
 #endif
-      llvm_unreachable("Do not know how to scalarize this operator's operand!");
+      report_fatal_error("Do not know how to scalarize this operator's "
+                         "operand!\n");
     case ISD::BITCAST:
       Res = ScalarizeVecOp_BITCAST(N);
       break;
@@ -3101,7 +3087,8 @@ SDValue DAGTypeLegalizer::WidenVSELECTAndMask(SDNode *N) {
 
   // If this is a splitted VSELECT that was previously already handled, do
   // nothing.
-  if (Cond->getValueType(0).getScalarSizeInBits() != 1)
+  EVT CondVT = Cond->getValueType(0);
+  if (CondVT.getScalarSizeInBits() != 1)
     return SDValue();
 
   EVT VSelVT = N->getValueType(0);
@@ -3124,6 +3111,14 @@ SDValue DAGTypeLegalizer::WidenVSELECTAndMask(SDNode *N) {
       SetCCOpVT = TLI.getTypeToTransformTo(Ctx, SetCCOpVT);
     EVT SetCCResVT = getSetCCResultType(SetCCOpVT);
     if (SetCCResVT.getScalarSizeInBits() == 1)
+      return SDValue();
+  } else if (CondVT.getScalarType() == MVT::i1) {
+    // If there is support for an i1 vector mask (or only scalar i1 conditions),
+    // don't touch.
+    while (TLI.getTypeAction(Ctx, CondVT) != TargetLowering::TypeLegal)
+      CondVT = TLI.getTypeToTransformTo(Ctx, CondVT);
+
+    if (CondVT.getScalarType() == MVT::i1)
       return SDValue();
   }
 
@@ -3835,7 +3830,7 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVectorImpl<SDValue> &LdChain,
     }
 
     LdOps.push_back(L);
-
+    LdOp = L;
 
     LdWidth -= NewVTWidth;
   }
