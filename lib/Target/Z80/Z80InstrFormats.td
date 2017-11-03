@@ -90,7 +90,8 @@ class Inst24<Prefix prefix, bits<8> opcode, ImmType immediate,
              string mnemonic, string arguments = "", string constraints = "",
              dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
   : Z80Inst<EZ80Mode, prefix, opcode, immediate, outputs, inputs, pattern,
-            !strconcat(mnemonic, "{.lil|}", arguments), constraints>;
+            !strconcat(mnemonic, "{.lil|}", arguments), constraints>,
+    Requires<[HaveEZ80Ops]>;
 
 class I    <Prefix prefix, bits<8> opcode,
             string mnemonic, string arguments = "", string constraints = "",
