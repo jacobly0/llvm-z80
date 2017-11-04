@@ -36,6 +36,17 @@ initFeatureMap(llvm::StringMap<bool> &Features,
   return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
 }
 
+ArrayRef<const char *> Z80TargetInfo::getGCCRegNames() const {
+  static const char *const GCCRegNames[] = {
+    "a", "f", "b", "c", "d", "e", "h", "l",
+    "a'", "f'", "b'", "c'", "d'", "e'", "h'", "l'",
+    "ixh", "ixl", "iyh", "iyl", "i", "r",
+    "af", "bc", "de", "hl", "af'", "bc'", "de'", "hl'",
+    "ix", "iy", "sp", "pc"
+  };
+  return GCCRegNames;
+}
+
 void Z80TargetInfo::getTargetDefines(const LangOptions &Opts,
                                      MacroBuilder &Builder) const {
   Z80TargetInfoBase::getTargetDefines(Opts, Builder);
@@ -51,6 +62,23 @@ bool EZ80TargetInfo::setCPU(const std::string &Name) {
     .Case("generic", true)
     .Case("ez80",    true)
     .Default(false);
+}
+
+ArrayRef<const char *> EZ80TargetInfo::getGCCRegNames() const {
+  static const char *const GCCRegNames[] = {
+    "a", "f", "b", "c", "d", "e", "h", "l",
+    "a'", "f'", "b'", "c'", "d'", "e'", "h'", "l'",
+    "ixh", "ixl", "iyh", "iyl", "i", "r",
+    "af", "bc", "de", "hl", "af'", "bc'", "de'", "hl'",
+    "ix", "iy", "sp", "pc",
+    "ubc", "ude", "uhl", "ubc'", "ude'", "uhl'", "uix", "uiy", "spl"
+  };
+  return GCCRegNames;
+}
+
+ArrayRef<TargetInfo::GCCRegAlias> EZ80TargetInfo::getGCCRegAliases() const {
+  static const TargetInfo::GCCRegAlias GCCRegAliases[] = {{{"sps"}, "sp"}};
+  return GCCRegAliases;
 }
 
 void EZ80TargetInfo::getTargetDefines(const LangOptions &Opts,

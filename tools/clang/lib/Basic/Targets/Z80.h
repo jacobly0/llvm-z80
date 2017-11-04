@@ -44,11 +44,6 @@ public:
     return false;
   }
   const char *getClobbers() const override { return ""; }
-  ArrayRef<const char *> getGCCRegNames() const override { return None; }
-  ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override {
-    return None;
-  }
-
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
   }
@@ -67,6 +62,10 @@ private:
     initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
                    StringRef CPU,
                    const std::vector<std::string> &FeaturesVec) const override;
+  ArrayRef<const char *> getGCCRegNames() const override;
+  ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override {
+    return None;
+  }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 };
@@ -84,6 +83,8 @@ public:
   }
 private:
   bool setCPU(const std::string &Name) override;
+  ArrayRef<const char *> getGCCRegNames() const override;
+  ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override;
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 };
