@@ -382,7 +382,7 @@ let mayLoad = 1, canFoldAsLoad = 1, isReMaterializable = 1 in {
 
   def LD8rp  : Pseudo<               "ld", "\t$dst, $src", "",
                      (outs R8:$dst), (ins ptr:$src)>;
-  def LD8gp  : I     <NoPre,   0x46, "ld", "\t$dst, $src", "",
+  def LD8gp  : Io    <Idx1Pre, 0x46, "ld", "\t$dst, $src", "",
                      (outs G8:$dst), (ins ptr:$src),
                      [(set G8:$dst, (load iPTR:$src))]>;
   def LD16rp : I16   <EDPre,   0x07, "ld", "\t$dst, $src", "",
@@ -399,7 +399,7 @@ let mayLoad = 1, canFoldAsLoad = 1, isReMaterializable = 1 in {
   def LD8ro  : Pseudo<               "ld", "\t$dst, $src", "",
                      (outs R8:$dst), (ins off:$src)>;
   def LD8go  : Io    <Idx1Pre, 0x46, "ld", "\t$dst, $src", "",
-                     (outs   G8:$dst), (ins off:$src),
+                     (outs G8:$dst), (ins off:$src),
                      [(set G8:$dst, (load offpat:$src))]>;
   def LD16ro : I16o  <Idx1Pre, 0x07, "ld", "\t$dst, $src", "",
                       (outs R16:$dst), (ins off:$src),
@@ -447,7 +447,7 @@ let mayStore = 1 in {
 
   def LD8pr  : Pseudo<               "ld", "\t$dst, $src", "",
                       (outs), (ins ptr:$dst, R8:$src)>;
-  def LD8pg  : I     <  NoPre, 0x70, "ld", "\t$dst, $src", "",
+  def LD8pg  : Io    <Idx0Pre, 0x70, "ld", "\t$dst, $src", "",
                       (outs), (ins ptr:$dst, G8:$src),
                       [(store G8:$src, iPTR:$dst)]>;
   def LD16pr : I16   <  EDPre, 0x0F, "ld", "\t$dst, $src", "",

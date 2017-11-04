@@ -92,25 +92,29 @@ unsigned Z80InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   }
   // prefix byte(s)
   unsigned Prefix = TSFlags & Z80II::PrefixMask;
+  bool HasPrefix;
   if (TSFlags & Z80II::IndexedIndexPrefix)
-    Size += isIndex(MI.getOperand(Prefix >> Z80II::PrefixShift),
-                    getRegisterInfo());
+    Size += HasPrefix = isIndex(MI.getOperand(Prefix >> Z80II::PrefixShift),
+                                getRegisterInfo());
   else
     switch (Prefix) {
     case Z80II::NoPrefix:
+      HasPrefix = false;
       break;
     case Z80II::CBPrefix:
     case Z80II::DDPrefix:
     case Z80II::EDPrefix:
     case Z80II::FDPrefix:
       Size += 1;
+      HasPrefix = true;
       break;
     case Z80II::DDCBPrefix:
     case Z80II::FDCBPrefix:
       Size += 2;
+      HasPrefix = true;
       break;
     case Z80II::AnyIndexPrefix:
-      Size += hasIndex(MI, getRegisterInfo());
+      Size += HasPrefix = hasIndex(MI, getRegisterInfo());
       break;
     }
   // immediate byte(s)
@@ -129,9 +133,9 @@ unsigned Z80InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
       Size += 3;
       break;
     }
-  // 1 byte if we need an offset
+  // 1 byte if we need an offset, but only for prefixed instructions
   if (TSFlags & Z80II::HasOff)
-    Size += 1;
+    Size += HasPrefix;
   return Size;
 }
 
