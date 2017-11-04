@@ -56,6 +56,7 @@ namespace {
 
     bool SelectMem(SDValue N, SDValue &Mem);
     bool SelectOff(SDValue N, SDValue &Reg, SDValue &Off);
+    bool SelectFI(SDValue N, SDValue &Reg, SDValue &Off);
 
     /// Implement addressing mode selection for inline asm expressions.
     bool SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
@@ -130,11 +131,31 @@ bool Z80DAGToDAGISel::SelectOff(SDValue N, SDValue &Reg, SDValue &Off) {
     return true;
   }
 }
+bool Z80DAGToDAGISel::SelectFI(SDValue N, SDValue &Reg, SDValue &Off) {
+  if (!SelectOff(N, Reg, Off))
+    return false;
+  return isa<FrameIndexSDNode>(Reg);
+}
 
 bool Z80DAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
-  llvm_unreachable("Unimplemented");
+  SDValue Op0, Op1;
+  switch (ConstraintID) {
+  default:
+    llvm_unreachable("Unexpected asm memory constraint");
+  case InlineAsm::Constraint_m:
+    if (!SelectMem(Op, Op0))
+      return true;
+    OutOps.push_back(Op0);
+    return false;
+  case InlineAsm::Constraint_o:
+    if (!SelectOff(Op, Op0, Op1))
+      return true;
+    OutOps.push_back(Op0);
+    OutOps.push_back(Op1);
+    return false;
+  }
 }
 
 /// This pass converts a legalized DAG into Z80-specific DAG,

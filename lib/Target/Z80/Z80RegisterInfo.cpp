@@ -186,7 +186,7 @@ void Z80RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (FrameIndex < 0)
     Offset += SlotSize;
   Offset += MI.getOperand(FIOperandNum + 1).getImm();
-  if (isInt<8>(Offset)) {
+  if (isInt<8>(Offset) && Opc != Z80::LD16rfi) {
     MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
     MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
     return;
@@ -195,12 +195,16 @@ void Z80RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       Is24Bit ? &Z80::O24RegClass : &Z80::O16RegClass, II, SPAdj);
   if ((Opc == Z80::LEA24ro &&
        Z80::A24RegClass.contains(MI.getOperand(0).getReg())) ||
-      (Opc == Z80::LEA16ro &&
+      ((Opc == Z80::LEA16ro || Opc == Z80::LD16rfi) &&
        Z80::A16RegClass.contains(MI.getOperand(0).getReg()))) {
     BuildMI(MBB, II, DL, TII.get(Is24Bit ? Z80::LD24ri : Z80::LD16ri),
             OffsetReg).addImm(Offset);
     MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(0);
+    if (Opc == Z80::LD16rfi) {
+      MI.setDesc(TII.get(TargetOpcode::COPY));
+      MI.RemoveOperand(FIOperandNum + 1);
+    } else
+      MI.getOperand(FIOperandNum + 1).ChangeToImmediate(0);
     BuildMI(MBB, ++II, DL, TII.get(Is24Bit ? Z80::ADD24ao : Z80::ADD16ao),
             MI.getOperand(0).getReg()).addReg(MI.getOperand(0).getReg())
       .addReg(OffsetReg, RegState::Kill);
@@ -228,7 +232,8 @@ void Z80RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       case Z80::LD16or: Opc = Z80::LD16pr; break;
       case Z80::LD8or: Opc = Z80::LD8pr; break;
       case Z80::LD8og: Opc = Z80::LD8pg; break;
-      case Z80::LEA24ro: case Z80::LEA16ro: Opc = TargetOpcode::COPY; break;
+      case Z80::LEA24ro: case Z80::LEA16ro:
+      case Z80::LD16rfi: Opc = TargetOpcode::COPY; break;
       case Z80::PEA24o: Opc = Z80::PUSH24r; break;
       case Z80::PEA16o: Opc = Z80::PUSH16r; break;
       }
@@ -250,7 +255,11 @@ void Z80RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.tieOperands(0, 1);
   } else {
     MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(0);
+    if (Opc == Z80::LD16rfi) {
+      MI.setDesc(TII.get(TargetOpcode::COPY));
+      MI.RemoveOperand(FIOperandNum + 1);
+    } else
+      MI.getOperand(FIOperandNum + 1).ChangeToImmediate(0);
     BuildMI(MBB, ++II, DL, TII.get(Is24Bit ? Z80::POP24r : Z80::POP16r), BasePtr);
   }
 }

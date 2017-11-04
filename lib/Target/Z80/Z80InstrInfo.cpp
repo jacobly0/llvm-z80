@@ -435,18 +435,19 @@ void Z80InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         // If the prev instr was an EX DE,HL, just kill it.
         if (MI != MBB.begin() && std::prev(MI)->getOpcode() == ExOpc)
           std::prev(MI)->eraseFromParent();
-        else
-          BuildMI(MBB, MI, DL, get(ExOpc))
-            ->findRegisterUseOperand(Is24Bit ? Z80::UDE : Z80::DE)
-            ->setIsUndef();
+        else {
+          MachineInstr &ExMI = *BuildMI(MBB, MI, DL, get(ExOpc));
+          for (unsigned Reg : { Is24Bit ? Z80::UDE : Z80::DE,
+                                Is24Bit ? Z80::UHL : Z80::HL })
+            ExMI.findRegisterUseOperand(Reg)->setIsUndef();
+        }
       }
       BuildMI(MBB, MI, DL,
               get(Z80::X8RegClass.contains(DstReg, SrcReg) ? Z80::LD8xx
                                                            : Z80::LD8yy),
               DstReg).addReg(SrcReg, getKillRegState(KillSrc));
       if (NeedEX)
-        BuildMI(MBB, MI, DL, get(ExOpc))
-          ->findRegisterUseOperand(Is24Bit ? Z80::UDE : Z80::DE)->setIsUndef();
+        BuildMI(MBB, MI, DL, get(ExOpc));
     }
     return;
   }

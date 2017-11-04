@@ -206,7 +206,9 @@ def imm_top_XFORM : SDNodeXForm<imm, [{
 def mempat : ComplexPattern<iPTR, 1, "SelectMem",
                             [imm, globaladdr, externalsym]>;
 def offpat : ComplexPattern<iPTR, 2, "SelectOff",
-                            [add, sub, frameindex]>;
+                            [add, frameindex]>;
+def fipat  : ComplexPattern<iPTR, 2, "SelectFI",
+                            [add, frameindex]>;
 
 //===----------------------------------------------------------------------===//
 // Instruction list.
@@ -852,6 +854,8 @@ def : Pat<(subc UHL, O24:$src), (SUB24ao O24:$src)>;
 def LEA16ro : I16o<EDPre, 0x02, "lea", "\t$dst, $src", "",
                    (outs R16:$dst), (ins off16:$src),
                    [(set R16:$dst, offpat:$src)]>, Requires<[HaveEZ80Ops]>;
+def LD16rfi: P<(outs R16:$dst), (ins off16:$src),
+                [(set R16:$dst, fipat:$src)]>;
 def LEA24ro : I24o<EDPre, 0x02, "lea", "\t$dst, $src", "",
                    (outs R24:$dst), (ins off24:$src),
                    [(set R24:$dst, offpat:$src)]>;
