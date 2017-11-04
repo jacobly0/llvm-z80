@@ -11,14 +11,6 @@
 // Z80 Instruction Format Definitions.
 //
 
-class Mode<bits<2> val> {
-  bits<2> Value = val;
-}
-def AnyMode  : Mode<0>;
-def CurMode  : Mode<1>;
-def Z80Mode  : Mode<2>;
-def EZ80Mode : Mode<3>;
-
 class Prefix<bits<4> val> {
   bits<4> Value = val;
 }
@@ -33,23 +25,22 @@ def IdxPre  : Prefix<7>;
 foreach i = 0-7 in
 def Idx#i#Pre : Prefix<!add(8, i)>;
 
-class ImmType<bits<2> val> {
-  bits<2> Value = val;
+class ImmInfo<bit hasOff, bit hasImm> {
+  bit HasOff = hasOff;
+  bit HasImm = hasImm;
 }
-def NoImm  : ImmType<0>;
-def Imm    : ImmType<1>;
-def Off    : ImmType<2>;
-def OffImm : ImmType<3>;
+def  NoImm : ImmInfo<0, 0>;
+def    Imm : ImmInfo<0, 1>;
+def Off    : ImmInfo<1, 0>;
+def OffImm : ImmInfo<1, 1>;
 
-class Z80Inst<Mode mode, Prefix prefix, bits<8> opcode, ImmType immediate,
+class Z80Inst<Prefix prefix, bits<8> opcode, ImmInfo imm, bits<2> immSize,
               dag outputs = (outs), dag inputs = (ins), list<dag> pattern = [],
               string asm = "", string constraints = "">
   : Instruction {
   let Namespace = "Z80";
 
   bits<8> Opcode = opcode;
-  bit hasImm = immediate.Value{0};
-  bit hasOff = immediate.Value{1};
 
   let OutOperandList = outputs;
   let InOperandList = inputs;
@@ -58,38 +49,39 @@ class Z80Inst<Mode mode, Prefix prefix, bits<8> opcode, ImmType immediate,
   let Constraints = constraints;
 
   let TSFlags{3-0} = prefix.Value;
-  let TSFlags{5-4} = mode.Value;
-  let TSFlags{7-6} = immediate.Value;
+  let TSFlags{4} = imm.HasOff;
+  let TSFlags{5} = imm.HasImm;
+  let TSFlags{7-6} = immSize;
   let TSFlags{15-8} = opcode;
 
   let isCodeGenOnly = 1;
 }
 
 let isPseudo = 1 in
-class Pseudo<string mnem, string args = "", string con = "",
-             dag outs = (outs), dag ins = (ins), list<dag> pattern = []>
-  : Z80Inst< AnyMode, NoPre, 0, NoImm,  outs, ins, pattern,
-            !strconcat(mnem,            args), con>;
+class Pseudo<string mnemonic, string arguments = "", string constraints = "",
+             dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
+  : Z80Inst<NoPre,       0,     NoImm, 0, outputs, inputs, pattern,
+            !strconcat(mnemonic,            arguments), constraints>;
 
-class Inst  <Prefix prefix, bits<8> opcode, ImmType immediate,
+class Inst  <Prefix prefix, bits<8> opcode, ImmInfo immediate,
              string mnemonic, string arguments = "", string constraints = "",
              dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Z80Inst< AnyMode, prefix, opcode, immediate, outputs, inputs, pattern,
+  : Z80Inst<prefix, opcode, immediate, 0, outputs, inputs, pattern,
             !strconcat(mnemonic,            arguments), constraints>;
-class Inst8 <Prefix prefix, bits<8> opcode, ImmType immediate,
+class Inst8 <Prefix prefix, bits<8> opcode, ImmInfo immediate,
              string mnemonic, string arguments = "", string constraints = "",
              dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Z80Inst< CurMode, prefix, opcode, immediate, outputs, inputs, pattern,
+  : Z80Inst<prefix, opcode, immediate, 1, outputs, inputs, pattern,
             !strconcat(mnemonic,            arguments), constraints>;
-class Inst16<Prefix prefix, bits<8> opcode, ImmType immediate,
+class Inst16<Prefix prefix, bits<8> opcode, ImmInfo immediate,
              string mnemonic, string arguments = "", string constraints = "",
              dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Z80Inst< Z80Mode, prefix, opcode, immediate, outputs, inputs, pattern,
+  : Z80Inst<prefix, opcode, immediate, 2, outputs, inputs, pattern,
             !strconcat(mnemonic, "{|.sis}", arguments), constraints>;
-class Inst24<Prefix prefix, bits<8> opcode, ImmType immediate,
+class Inst24<Prefix prefix, bits<8> opcode, ImmInfo immediate,
              string mnemonic, string arguments = "", string constraints = "",
              dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Z80Inst<EZ80Mode, prefix, opcode, immediate, outputs, inputs, pattern,
+  : Z80Inst<prefix, opcode, immediate, 3, outputs, inputs, pattern,
             !strconcat(mnemonic, "{.lil|}", arguments), constraints>,
     Requires<[HaveEZ80Ops]>;
 
@@ -103,21 +95,21 @@ class Ii   <Prefix prefix, bits<8> opcode,
             dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
   : Inst  <prefix, opcode,    Imm, mnemonic, arguments, constraints,
            outputs, inputs, pattern>;
-class Io   <Prefix prefix, bits<8> opcode,
-            string mnemonic, string arguments = "", string constraints = "",
-            dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Inst  <prefix, opcode, Off   , mnemonic, arguments, constraints,
-           outputs, inputs, pattern>;
-class Ioi  <Prefix prefix, bits<8> opcode,
-            string mnemonic, string arguments = "", string constraints = "",
-            dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Inst  <prefix, opcode, OffImm, mnemonic, arguments, constraints,
-           outputs, inputs, pattern>;
 
+class I8   <Prefix prefix, bits<8> opcode,
+            string mnemonic, string arguments = "", string constraints = "",
+            dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
+  : Inst8 <prefix, opcode,  NoImm, mnemonic, arguments, constraints,
+           outputs, inputs, pattern>;
 class I8i  <Prefix prefix, bits<8> opcode,
             string mnemonic, string arguments = "", string constraints = "",
             dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
   : Inst8 <prefix, opcode,    Imm, mnemonic, arguments, constraints,
+           outputs, inputs, pattern>;
+class I8o  <Prefix prefix, bits<8> opcode,
+            string mnemonic, string arguments = "", string constraints = "",
+            dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
+  : Inst8 <prefix, opcode, Off   , mnemonic, arguments, constraints,
            outputs, inputs, pattern>;
 class I8oi <Prefix prefix, bits<8> opcode,
             string mnemonic, string arguments = "", string constraints = "",
@@ -140,11 +132,6 @@ class I16o <Prefix prefix, bits<8> opcode,
             dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
   : Inst16<prefix, opcode, Off   , mnemonic, arguments, constraints,
            outputs, inputs, pattern>;
-class I16oi<Prefix prefix, bits<8> opcode,
-            string mnemonic, string arguments = "", string constraints = "",
-            dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Inst16<prefix, opcode, OffImm, mnemonic, arguments, constraints,
-           outputs, inputs, pattern>;
 
 class I24  <Prefix prefix, bits<8> opcode,
             string mnemonic, string arguments = "", string constraints = "",
@@ -161,13 +148,8 @@ class I24o <Prefix prefix, bits<8> opcode,
             dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
   : Inst24<prefix, opcode, Off   , mnemonic, arguments, constraints,
            outputs, inputs, pattern>;
-class I24oi<Prefix prefix, bits<8> opcode,
-            string mnemonic, string arguments = "", string constraints = "",
-            dag outputs = (outs), dag inputs = (ins), list<dag> pattern = []>
-  : Inst24<prefix, opcode, OffImm, mnemonic, arguments, constraints,
-           outputs, inputs, pattern>;
 
 class P<dag outs = (outs), dag ins = (ins), list<dag> pattern = []>
-  : Z80Inst<AnyMode, NoPre, 0, NoImm, outs, ins, pattern> {
+  : Z80Inst<NoPre, 0, NoImm, 0, outs, ins, pattern> {
   let isPseudo = 1;
 }

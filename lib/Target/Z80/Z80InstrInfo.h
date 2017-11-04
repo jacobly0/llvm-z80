@@ -54,29 +54,24 @@ bool splitReg(unsigned ByteSize, unsigned Opc8, unsigned Opc16, unsigned Opc24,
 namespace Z80II {
   enum {
     PrefixShift = 0,
-    NoPrefix = 0 << PrefixShift,
-    CBPrefix = 1 << PrefixShift,
-    DDPrefix = 2 << PrefixShift,
-    DDCBPrefix = 3 << PrefixShift,
-    EDPrefix = 4 << PrefixShift,
-    FDPrefix = 5 << PrefixShift,
-    FDCBPrefix = 6 << PrefixShift,
-    AnyIndexPrefix = 7 << PrefixShift,
-    PrefixMask = 7 << PrefixShift,
-    IndexedIndexPrefix = 8 << PrefixShift,
+    NoPrefix = 0,
+    CBPrefix = 1,
+    DDPrefix = 2,
+    DDCBPrefix = 3,
+    EDPrefix = 4,
+    FDPrefix = 5,
+    FDCBPrefix = 6,
+    AnyIndexPrefix = 7,
+    PrefixMask = 7,
+    IndexedIndexPrefix = 8,
 
-    ModeShift = 4,
-    AnyMode = 0 << ModeShift,
-    CurMode = 1 << ModeShift,
-    Z80Mode = 2 << ModeShift,
-    EZ80Mode = 3 << ModeShift,
-    ModeMask = 3 << ModeShift,
-
-    HasImm = 1 << 6,
-    HasOff = 1 << 7,
+    HasOff = 1 << 4,
+    HasImm = 1 << 5,
+    ImmSizeShift = 6,
+    ImmSizeMask = 3,
 
     OpcodeShift = 8,
-    OpcodeMask = 0xFF << OpcodeShift
+    OpcodeMask = 0xFF
   };
 } // end namespace Z80II;
 

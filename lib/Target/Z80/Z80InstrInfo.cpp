@@ -79,23 +79,20 @@ unsigned Z80InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   // 1 byte for opcode
   unsigned Size = 1;
   // 1 byte if we need a suffix
-  switch (TSFlags & Z80II::ModeMask) {
-  case Z80II::AnyMode:
-  case Z80II::CurMode:
-    break;
-  case Z80II::Z80Mode:
+  // FIXME: create an operand for the suffix
+  switch (TSFlags >> Z80II::ImmSizeShift & Z80II::ImmSizeMask) {
+  case 2:
     Size += Subtarget.is24Bit();
     break;
-  case Z80II::EZ80Mode:
+  case 3:
     Size += Subtarget.is16Bit();
     break;
   }
   // prefix byte(s)
-  unsigned Prefix = TSFlags & Z80II::PrefixMask;
+  unsigned Prefix = TSFlags >> Z80II::PrefixShift & Z80II::PrefixMask;
   bool HasPrefix;
   if (TSFlags & Z80II::IndexedIndexPrefix)
-    Size += HasPrefix = isIndex(MI.getOperand(Prefix >> Z80II::PrefixShift),
-                                getRegisterInfo());
+    Size += HasPrefix = isIndex(MI.getOperand(Prefix), getRegisterInfo());
   else
     switch (Prefix) {
     case Z80II::NoPrefix:
@@ -118,21 +115,12 @@ unsigned Z80InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
       break;
     }
   // immediate byte(s)
-  if (TSFlags & Z80II::HasImm)
-    switch (TSFlags & Z80II::ModeMask) {
-    case Z80II::AnyMode:
-      Size += 1;
-      break;
-    case Z80II::CurMode:
-      Size += Subtarget.is24Bit() ? 3 : 2;
-      break;
-    case Z80II::Z80Mode:
-      Size += 2;
-      break;
-    case Z80II::EZ80Mode:
-      Size += 3;
-      break;
-    }
+  if (TSFlags & Z80II::HasImm) {
+    unsigned ImmSize = TSFlags >> Z80II::ImmSizeShift & Z80II::ImmSizeMask;
+    if (!ImmSize)
+      ImmSize = Subtarget.is24Bit() ? 3 : 2;
+    Size += ImmSize;
+  }
   // 1 byte if we need an offset, but only for prefixed instructions
   if (TSFlags & Z80II::HasOff)
     Size += HasPrefix;
@@ -1112,7 +1100,7 @@ inline static bool isSZSettingInstr(MachineInstr &MI) {
   case Z80::AND8ar: case Z80::AND8ai: case Z80::AND8ap: case Z80::AND8ao:
   case Z80::XOR8ar: case Z80::XOR8ai: case Z80::XOR8ap: case Z80::XOR8ao:
   case Z80:: OR8ar: case Z80:: OR8ai: case Z80:: OR8ap: case Z80:: OR8ao:
-  case Z80::SBC16ao:case Z80::NEG:    case Z80::ADC16ao:
+  case Z80::SBC16ao:case Z80::NEG8:   case Z80::ADC16ao:
   case Z80::SUB16ao:case Z80::SUB24ao:
   case Z80::RLC8r:  case Z80::RLC8p:  case Z80::RLC8o:
   case Z80::RRC8r:  case Z80::RRC8p:  case Z80::RRC8o:
